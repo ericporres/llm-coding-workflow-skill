@@ -1,5 +1,5 @@
 ---
-name: LLM Coding Workflow
+name: llm-coding-workflow
 description: AI-augmented software engineering workflow based on Addy Osmani's methodology. Implements structured planning, chunked implementation, extensive context provision, strategic model selection, human oversight, granular commits, and continuous learning. Treats LLMs as pair programmers requiring clear direction rather than autonomous agents.
 ---
 
