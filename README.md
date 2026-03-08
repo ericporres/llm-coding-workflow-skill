@@ -1,12 +1,21 @@
 # LLM Coding Workflow Skill
 
-A Claude Code skill that implements Addy Osmani's AI-augmented software engineering methodology — structured planning, chunked execution, human oversight, and continuous learning. Treats LLMs as pair programmers that need clear direction, not autonomous agents.
+A Claude Code skill for AI-augmented software engineering — structured planning, two collaboration modes (interactive pair programming and autonomous delegation), human accountability, and continuous learning. Synthesized from Addy Osmani's methodology, Anthropic's agentic coding research, and 30+ real-world projects.
 
 ## What This Is
 
-This is a **skill** for [Claude Code](https://docs.claude.com/en/docs/claude-code) (also works in [Cowork](https://claude.ai)). Once installed, it gives Claude a systematic framework for AI-assisted development that prevents wasted cycles and produces higher-quality output.
+This is a **skill** for [Claude Code](https://docs.claude.com/en/docs/claude-code) (also works in [Cowork](https://claude.ai)). Once installed, it gives Claude a systematic framework for AI-assisted development that prevents wasted cycles and enables increasingly autonomous execution where appropriate.
 
-The core idea: AI coding assistants are incredible force multipliers, but the human engineer remains the director. This skill encodes that philosophy into a repeatable workflow.
+The core idea: the human engineer is the accountable owner; the AI is a capable collaborator whose autonomy scales with the quality of the prompt. Well-scoped delegation with clear acceptance criteria is not "blind trust" — it is a higher-leverage operating mode.
+
+## Two Collaboration Modes
+
+| Mode | When | How |
+|------|------|-----|
+| **Pair Mode** (Conductor) | Ambiguous problems, design decisions, learning new domains | Interactive back-and-forth; AI as thought partner |
+| **Delegation Mode** (Orchestrator) | Well-scoped tasks with clear acceptance criteria | Structured prompt → autonomous execution → human review |
+
+The skill teaches Claude when to use each mode and how to scale guardrails with scope.
 
 ## The 10 Principles
 
@@ -14,8 +23,8 @@ The core idea: AI coding assistants are incredible force multipliers, but the hu
 2. **Break work into small chunks** — Focused, manageable tasks instead of monolithic requests
 3. **Provide extensive context** — Relevant files, docs, patterns, and constraints loaded before each task
 4. **Choose the right model** — Strategic model switching based on task type (reasoning vs. speed vs. integration)
-5. **Leverage agents across the lifecycle** — Let AI handle routine tasks under supervision
-6. **Maintain human oversight** — Treat AI output like a junior developer's code: review everything
+5. **Leverage agents across the lifecycle** — Pair Mode for interactive work, Delegation Mode for well-scoped autonomous execution
+6. **Maintain human accountability** — You own the output; review depth scales with delegation scope
 7. **Use granular commits** — Every passing test is a save point; commit early, commit often
 8. **Customize AI behavior** — Rules files (CLAUDE.md, .cursorrules) that encode team conventions
 9. **Embrace testing and automation** — CI/CD pipelines as feedback loops for AI-generated code
@@ -55,11 +64,14 @@ Or use natural language:
 ### Planning Phase
 You describe a feature. Claude creates a detailed spec — requirements, edge cases, technical constraints, task decomposition, risk assessment — in about 15 minutes. This prevents the most expensive mistake in AI-assisted development: building the wrong thing.
 
-### Implementation Phase
-The plan gets broken into small, focused chunks. Each chunk carries forward context from completed work. Claude implements one chunk at a time, you review, test, and commit before moving on.
+### Implementation Phase (Pair Mode)
+Interactive back-and-forth. The plan gets broken into small chunks. Claude implements one chunk at a time, you review, test, and commit before moving on. Best for ambiguous problems and design decisions.
+
+### Implementation Phase (Delegation Mode)
+You write a clear spec with acceptance criteria, hand it off, and review the deliverable against the spec. Best for well-scoped tasks where you'd trust the output after a code review. The skill includes a delegation prompt template and pre-delegation checklist.
 
 ### Review Phase
-Every piece of generated code goes through review — logic correctness, security implications, edge cases, style consistency. The skill enforces this as a required step, not an optional one.
+Review depth scales with delegation scope: a single-file fix needs a diff review; a feature needs spec review + test pass + code review; multi-service changes need integration tests + manual QA. Infrastructure and security stay in pair mode.
 
 ### Commit Phase
 Granular commits after each successful chunk. If something goes wrong three steps later, you roll back to the last good state instead of untangling a massive diff.
@@ -97,14 +109,17 @@ See `SKILL.md` for the full configuration reference.
 ## Anti-Patterns This Prevents
 
 - **Monolithic requests** — "Build me the entire feature" produces worse results than 8 focused chunks
-- **Blind trust** — Accepting AI code without review leads to subtle bugs that compound
+- **Blind trust** — Delegating without acceptance criteria or review is not delegation, it's abdication
 - **Context starvation** — The less context you provide, the more the AI guesses (badly)
 - **Model loyalty** — Sticking with one model when it's clearly stuck
 - **Big commits** — Hard to debug, impossible to roll back cleanly
+- **One-mode thinking** — Using only interactive mode when delegation would be faster, or only delegation when the problem needs exploration
 
 ## Background
 
-This skill implements the methodology described by Addy Osmani (Google Chrome engineering lead) for getting the most out of AI coding assistants. The original framework comes from his practical experience using LLMs in production engineering workflows. This skill packages those principles into a repeatable workflow for Claude Code.
+This skill synthesizes Addy Osmani's LLM coding workflow (Google Chrome engineering lead), Anthropic's agentic coding research, Harper Reed's spec-driven pipeline, and patterns from 30+ real-world projects. The v2.0 rewrite adds two collaboration modes reflecting how experienced practitioners actually work with AI — sometimes as a pair programmer, sometimes as an autonomous agent executing against a clear spec.
+
+The operating model: delegate, review, own.
 
 Built by [Eric Porres](https://github.com/ericporres).
 
