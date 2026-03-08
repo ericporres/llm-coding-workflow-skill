@@ -1,24 +1,35 @@
 ---
 name: llm-coding-workflow
-description: AI-augmented software engineering workflow based on Addy Osmani's methodology. Implements structured planning, chunked implementation, extensive context provision, strategic model selection, human oversight, granular commits, and continuous learning. Treats LLMs as pair programmers requiring clear direction rather than autonomous agents.
+description: AI-augmented software engineering workflow synthesized from Addy Osmani's methodology, Anthropic's agentic coding research, and 30+ real-world projects. Supports two collaboration modes — interactive pair programming and autonomous delegation — with structured planning, context management, strategic model selection, human accountability, and continuous learning.
+version: 2.0
+created_by: "Eric Porres — eric@porres.com"
+last_updated: 2026-03-08
 ---
 
 # LLM Coding Workflow
 
-AI-augmented software engineering workflow that maximizes LLM effectiveness through structured processes, clear context, and human oversight.
+AI-augmented software engineering workflow that maximizes LLM effectiveness through structured planning, clear context, strategic delegation, and human accountability.
 
 ## What This Skill Does
 
-This skill implements Addy Osmani's proven LLM coding workflow methodology, treating AI as a powerful pair programmer that requires clear direction, context, and oversight. It provides a systematic approach to AI-assisted development that prevents wasted cycles and ensures high-quality output.
+This skill synthesizes Addy Osmani's LLM coding workflow, Anthropic's agentic coding research, Harper Reed's spec-driven pipeline, and patterns from 30+ real-world projects. It supports two collaboration modes — interactive pair programming and autonomous delegation — and provides a systematic approach to AI-assisted development that prevents wasted cycles while enabling increasingly autonomous execution.
 
-**Core Philosophy**: AI-augmented engineering, not autonomous AI coding. The human engineer remains the director; the AI is a capable collaborator.
+**Core Philosophy**: The human engineer is the accountable owner; the AI is a capable collaborator whose autonomy scales with the quality of the prompt. Well-scoped delegation with clear acceptance criteria is not "blind trust" — it is a higher-leverage operating mode.
+
+**Two Collaboration Modes:**
+
+| Mode | When | How | Review |
+|------|------|-----|--------|
+| **Pair Mode** (Conductor) | Ambiguous problems, design decisions, learning new domains | Interactive back-and-forth; AI as thought partner | Line-by-line as you go |
+| **Delegation Mode** (Orchestrator) | Well-scoped tasks with clear acceptance criteria | Structured prompt → autonomous execution → human review | Deliverable review against spec |
 
 **Key Capabilities:**
 - **Structured Planning**: Rapid waterfall-style planning before implementation
 - **Chunked Execution**: Small, focused tasks with quick course correction
 - **Context Management**: Systematic context provision for optimal AI output
 - **Model Selection**: Strategic switching between models based on task needs
-- **Human Oversight**: Review-first approach treating AI output as junior developer code
+- **Human Accountability**: You own the output; review depth scales with delegation scope
+- **Delegation Prompts**: Spec-driven handoff for autonomous execution
 - **Granular Commits**: Frequent save points for easy rollback
 - **Continuous Learning**: Skill amplification through AI collaboration
 
@@ -180,45 +191,64 @@ Practice "model musical chairs" - different models have different strengths:
 
 #### 5. Leverage AI Agents Across Development Lifecycle
 
-CLI tools can handle multiple tasks: reading files, running tests, fixing bugs, opening PRs.
+Modern AI coding agents (Claude Code, Cursor, Copilot Workspace) can read files, run tests, fix bugs, open PRs, and execute multi-step tasks autonomously. The question is not whether to delegate, but how much supervision to apply.
 
+**Pair Mode — Interactive agent use:**
 ```bash
-# Let agent handle routine tasks
+# Short, focused agent tasks with immediate review
 /llm-workflow agent-task "Fix all TypeScript errors in src/"
 /llm-workflow agent-task "Update tests for changed files"
-/llm-workflow agent-task "Generate PR description"
-
-# But ALWAYS maintain supervision
-/llm-workflow agent-status
-/llm-workflow agent-review
+/llm-workflow agent-review  # review before moving on
 ```
 
-**Critical:** Never let agents run unattended for extended periods.
-
-#### 6. Maintain Human Oversight
-
-**Never blindly trust LLM output.** Treat AI-generated code as if it came from a junior developer.
-
+**Delegation Mode — Autonomous agent execution:**
 ```bash
-# Review all generated code
-/llm-workflow review --thorough
-
-# Run tests after every change
-/llm-workflow test --affected
-
-# Verify before accepting
-/llm-workflow verify
+# Well-scoped delegation with clear acceptance criteria
+# (See "Delegation Mode" section below for full prompt template)
+/llm-workflow delegate "Implement user auth API" --spec spec.md
+/llm-workflow delegate-status   # check progress
+/llm-workflow delegate-review   # review deliverable against spec
 ```
 
-**Review Checklist:**
-- [ ] Logic correctness
-- [ ] Edge case handling
-- [ ] Security implications
-- [ ] Performance considerations
-- [ ] Code style consistency
-- [ ] Test coverage
+**Guardrails scale with scope, not with distrust:**
 
-You remain the **accountable engineer** regardless of AI involvement.
+| Delegation Scope | Guardrails |
+|-----------------|------------|
+| Single file fix | Commit diff review |
+| Feature implementation | Spec review + test pass + code review |
+| Multi-service change | Spec review + integration tests + manual QA |
+| Infrastructure/security | Never fully delegate; pair mode only |
+
+#### 6. Maintain Human Accountability
+
+**You own the output.** Review depth should scale with delegation scope, not default to maximum suspicion.
+
+**Pair Mode review** — You reviewed as you went. A quick diff and test pass suffices:
+```bash
+/llm-workflow test --affected
+/llm-workflow commit
+```
+
+**Delegation Mode review** — You delegated a scoped task. Review the deliverable against the spec:
+```bash
+# Review deliverable against acceptance criteria
+/llm-workflow delegate-review --spec spec.md
+
+# Run full test suite
+/llm-workflow test --full
+
+# Security review for sensitive areas
+/llm-workflow review --security
+```
+
+**Review Checklist (adapt to scope):**
+- [ ] Deliverable matches spec / acceptance criteria
+- [ ] Tests pass (unit + integration as appropriate)
+- [ ] No security regressions
+- [ ] No unintended side effects outside scope
+- [ ] Code style consistent with project conventions
+
+**The operating model is "delegate, review, own"** — not "distrust and micromanage." A well-scoped prompt with clear acceptance criteria earns a deliverable-level review, not a line-by-line audit.
 
 #### 7. Use Frequent, Granular Git Commits
 
@@ -329,6 +359,66 @@ Using AI doesn't dull skills - it **amplifies existing expertise**. LLMs reward 
 - Understand why AI made specific choices
 - Debug AI mistakes yourself first
 - Keep notes on effective prompts
+
+---
+
+### Delegation Mode: Spec-Driven Autonomous Execution
+
+When a task is well-scoped with clear acceptance criteria, delegation mode lets you hand off implementation to an AI agent and review the deliverable rather than supervising each step.
+
+#### Pre-Delegation Checklist
+
+Before delegating, verify:
+- [ ] Task has a clear, bounded scope (one feature, one fix, one refactor)
+- [ ] Acceptance criteria are explicit and testable
+- [ ] The codebase has existing tests or a test framework in place
+- [ ] No security-sensitive changes (auth, payments, PII handling) — those stay in pair mode
+- [ ] You can verify the deliverable against the spec without reading every line
+
+#### Delegation Prompt Template
+
+```markdown
+## Task
+[One-sentence description of what to build/fix/refactor]
+
+## Context
+- Project: [repo name, relevant paths]
+- Stack: [language, framework, key libraries]
+- Related files: [list specific files the agent should read]
+
+## Acceptance Criteria
+1. [Specific, testable criterion]
+2. [Specific, testable criterion]
+3. [Specific, testable criterion]
+
+## Constraints
+- Follow existing patterns in [file/directory]
+- Do not modify [protected areas]
+- All tests must pass before marking complete
+
+## Out of Scope
+- [Explicitly list what NOT to do]
+```
+
+#### Three-Tier Execution Model
+
+For complex projects, delegation can span multiple tiers:
+
+| Tier | Tool | Role | Example |
+|------|------|------|---------|
+| **Design** | Cowork / Chat | Architecture, spec writing, review | "Design the auth system" |
+| **Build** | Claude Code | Autonomous implementation | "Implement the auth API per spec.md" |
+| **Scale** | Ruflo / Swarms | Parallel multi-agent execution | "Run 4 agents: API, tests, docs, migration" |
+
+The spec is the handoff document between tiers. Write it in tier 1, execute it in tier 2, scale it in tier 3.
+
+#### Recovery from Delegation Failures
+
+When a delegated task goes off-track:
+1. **Stop** — don't let it compound. `git stash` or `git reset` to last checkpoint.
+2. **Diagnose** — was the spec ambiguous? Was context missing? Was the task too broad?
+3. **Adjust** — tighten the spec, add missing context, break into smaller delegations.
+4. **Re-delegate or switch to pair mode** depending on diagnosis.
 
 ---
 
@@ -767,19 +857,42 @@ export LLM_WORKFLOW_TEST_FRAMEWORK="jest"
 
 ### Summary
 
-The LLM Coding Workflow treats AI as a powerful pair programmer, not an autonomous coder. Success comes from:
+The LLM Coding Workflow treats AI as a capable collaborator whose autonomy scales with prompt quality. Success comes from:
 
-1. **Plan** - Rapid structured planning before coding
-2. **Chunk** - Small, focused tasks
-3. **Context** - Extensive relevant information
-4. **Select** - Right model for the task
-5. **Oversee** - Human review of all output
-6. **Commit** - Granular save points
-7. **Learn** - Continuous skill amplification
+1. **Plan** — Rapid structured planning before coding
+2. **Chunk** — Small, focused tasks (pair mode) or well-scoped delegations (delegation mode)
+3. **Context** — Extensive relevant information; context injection beats model upgrades
+4. **Select** — Right model for the task
+5. **Delegate or Pair** — Match the collaboration mode to the task
+6. **Own** — Review depth scales with scope; you own the output regardless
+7. **Commit** — Granular save points for easy rollback
+8. **Learn** — Continuous skill amplification through AI collaboration
 
-**Remember:** AI coding assistants are incredible force multipliers, but the human engineer remains the director of the show.
+**The operating model is "delegate, review, own."** AI coding agents are force multipliers — and increasingly, autonomous executors of well-scoped work. The human engineer sets direction, writes specs, reviews deliverables, and takes accountability.
 
 ---
+
+### Sources & References
+
+This skill synthesizes insights from the following sources:
+
+**Primary Frameworks:**
+- Addy Osmani, "The Human Side of AI Coding: Conductor vs. Orchestrator" (addyosmani.com, 2025) — Two collaboration modes framework
+- Addy Osmani, "LLM Coding Workflow" (addyosmani.com, 2025) — 10 principles for AI-augmented development
+- Harper Reed, "My LLM Codegen Workflow" (harper.blog, 2025) — Spec-driven pipeline: spec.md → plan.md → prompt_plan.md
+
+**Research & Industry Reports:**
+- Anthropic, "Agentic Coding Trends in 2026" (code.claude.com/blog, 2026) — Agents complete ~20 actions autonomously; "delegate, review, own" operating model
+- Anthropic, "Claude Code Best Practices" (docs.anthropic.com, 2025-2026) — CLAUDE.md conventions, context injection, permission management
+- Greptile, "Measuring the Impact of AI on Developer Productivity" (greptile.com, 2025) — Quantitative analysis of AI coding impact
+
+**Practitioner Accounts:**
+- Eric Porres, "How I Built a WhatsApp MCP Server Without Writing a Single Line of Code" (promptedbyeric.substack.com, 2026) — Real-world Cowork → Claude Code delegation pattern
+- Geoffrey Huntley, "Ultra-Large Context and Agentic Coding" (ghuntley.com, 2025) — Context window management strategies
+
+**Related Skills:**
+- `builder-playbook` — Project archetypes, scaffold recipes, and infrastructure patterns extracted from 45+ projects
+- `github-playbook` — Git workflow, multi-machine setup, daily development patterns
 
 ### Related Commands
 
