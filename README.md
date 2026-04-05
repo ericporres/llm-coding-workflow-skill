@@ -17,7 +17,17 @@ The core idea: the human engineer is the accountable owner; the AI is a capable 
 
 The skill teaches Claude when to use each mode and how to scale guardrails with scope.
 
-## The 10 Principles
+## The Principles
+
+### 0. Interview Before Planning (new in v2.1)
+
+Before you plan, make sure you're planning the right thing. Most people show up with a solution in their head ("build me a dashboard") when the real need is something different ("I need three numbers emailed to me every Monday"). One prompt closes the gap:
+
+> *"I'm about to start this project. Interview me until you have 95% confidence about what I actually want, not what I think I should want."*
+
+This flips the dynamic. Instead of you pitching an idea and hoping the AI reads your mind, the AI asks the questions that surface assumptions you didn't know you were making. Five minutes of interviewing saves five hours of rework — especially valuable in Delegation Mode where a wrong spec means everything downstream is wrong.
+
+### 1–10. The Core Principles
 
 1. **Plan before coding** — Rapid "waterfall in 15 minutes" planning before any implementation
 2. **Break work into small chunks** — Focused, manageable tasks instead of monolithic requests
@@ -56,13 +66,17 @@ The skill activates automatically when you work on development tasks. You can al
 Or use natural language:
 
 - *"Plan out the auth feature before we start coding"*
+- *"Interview me about what I actually need before we plan"*
 - *"Break this into smaller tasks"*
 - *"Review what we just wrote before committing"*
 
 ## How It Works
 
+### Interview Phase (new in v2.1)
+You describe what you want. Claude interviews you until it has 95% confidence about the real need — separating the *what* from the *why* before planning begins. This surfaces assumptions and prevents the most expensive mistake: building the wrong thing.
+
 ### Planning Phase
-You describe a feature. Claude creates a detailed spec — requirements, edge cases, technical constraints, task decomposition, risk assessment — in about 15 minutes. This prevents the most expensive mistake in AI-assisted development: building the wrong thing.
+The plan gets created — requirements, edge cases, technical constraints, task decomposition, risk assessment — in about 15 minutes. This prevents building the wrong thing at the wrong scale.
 
 ### Implementation Phase (Pair Mode)
 Interactive back-and-forth. The plan gets broken into small chunks. Claude implements one chunk at a time, you review, test, and commit before moving on. Best for ambiguous problems and design decisions.
@@ -114,12 +128,13 @@ See `SKILL.md` for the full configuration reference.
 - **Model loyalty** — Sticking with one model when it's clearly stuck
 - **Big commits** — Hard to debug, impossible to roll back cleanly
 - **One-mode thinking** — Using only interactive mode when delegation would be faster, or only delegation when the problem needs exploration
+- **Skipping the interview** — Jumping straight to planning without validating the actual need
 
 ## Background
 
-This skill synthesizes Addy Osmani's LLM coding workflow (Google Chrome engineering lead), Anthropic's agentic coding research, Harper Reed's spec-driven pipeline, and patterns from 30+ real-world projects. The v2.0 rewrite adds two collaboration modes reflecting how experienced practitioners actually work with AI — sometimes as a pair programmer, sometimes as an autonomous agent executing against a clear spec.
+This skill synthesizes Addy Osmani's LLM coding workflow (Google Chrome engineering lead), Anthropic's agentic coding research, Harper Reed's spec-driven pipeline, and patterns from 30+ real-world projects. v2.1 adds a "Principle 0" interview step that surfaces assumptions before planning begins — the single highest-ROI addition from real-world use.
 
-The operating model: delegate, review, own.
+The operating model: interview, plan, delegate, review, own.
 
 Built by [Eric Porres](https://github.com/ericporres).
 
