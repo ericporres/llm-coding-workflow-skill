@@ -1,9 +1,9 @@
 ---
 name: llm-coding-workflow
 description: AI-augmented software engineering workflow synthesized from Addy Osmani's methodology, Anthropic's agentic coding research, and 30+ real-world projects. Supports two collaboration modes — interactive pair programming and autonomous delegation — with structured planning, context management, strategic model selection, human accountability, and continuous learning.
-version: 2.0
+version: 2.1
 created_by: "Eric Porres — eric@porres.com"
-last_updated: 2026-03-08
+last_updated: 2026-04-03
 ---
 
 # LLM Coding Workflow
@@ -76,6 +76,22 @@ This skill synthesizes Addy Osmani's LLM coding workflow, Anthropic's agentic co
 ### The 10 Principles
 
 This workflow is built on 10 core principles that maximize AI effectiveness:
+
+#### 0. Interview Before Planning
+
+**Before you plan, make sure you're planning the right thing.** Most people show up with a solution in their head ("build me a dashboard") when the real need is something different ("I need three numbers emailed to me every Monday"). This one prompt closes the gap:
+
+> *"I'm about to start this project. Interview me until you have 95% confidence about what I actually want, not what I think I should want."*
+
+This flips the dynamic. Instead of you pitching an idea and hoping the AI reads your mind, the AI asks the questions that surface assumptions you did not know you were making. It separates the _what_ from the _why_ before a single line of planning gets done.
+
+**How to use it:**
+- Start every new project or feature with this prompt (or something like it)
+- Answer honestly, including "I don't know yet" — the gaps are where the value is
+- Let the AI play it back: "So what you actually need is ___. Is that right?"
+- Only after confirmation should you move to Principle 1 (planning)
+
+This is especially valuable in **Delegation Mode** — if the spec is wrong, everything downstream is wrong. Five minutes of interviewing saves five hours of rework.
 
 #### 1. Plan Before Coding
 
