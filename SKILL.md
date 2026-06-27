@@ -1,397 +1,133 @@
 ---
 name: llm-coding-workflow
 description: AI-augmented software engineering workflow synthesized from Addy Osmani's methodology, Anthropic's agentic coding research, and 30+ real-world projects. Supports two collaboration modes — interactive pair programming and autonomous delegation — with structured planning, context management, strategic model selection, human accountability, and continuous learning.
-version: 2.1
+version: 3.1
 created_by: "Eric Porres — eric@porres.com"
-last_updated: 2026-04-03
+last_updated: 2026-06-10
 ---
 
 # LLM Coding Workflow
 
 AI-augmented software engineering workflow that maximizes LLM effectiveness through structured planning, clear context, strategic delegation, and human accountability.
 
+## Surface Contract
+
+This skill is invoked primarily in **Cowork sessions**. In Cowork, its output is always an **artifact** — a plan, a spec, a delegation prompt, or a review. It is not an execution surface for code.
+
+| Surface | This skill produces | Execution happens in |
+|---|---|---|
+| **Cowork** (primary) | Plan, spec, delegation prompt, review, handoff doc | Claude Code CLI (via terminal) or Ruflo (swarm/scale) |
+| **Claude Code CLI** | Can load for reference; informs pair-mode coaching | In place (the CLI itself writes/edits files) |
+
+When an agent running in Cowork reads an example that says "implement the feature" or "run the tests," the correct action is to **produce a delegation prompt and hand off to Claude Code**, not to attempt implementation in-session. Cowork's Desktop Commander MCP can invoke Claude Code remotely, but the skill's own advice is about the handoff artifact, not in-session edits.
+
 ## What This Skill Does
 
 This skill synthesizes Addy Osmani's LLM coding workflow, Anthropic's agentic coding research, Harper Reed's spec-driven pipeline, and patterns from 30+ real-world projects. It supports two collaboration modes — interactive pair programming and autonomous delegation — and provides a systematic approach to AI-assisted development that prevents wasted cycles while enabling increasingly autonomous execution.
 
-**Core Philosophy**: The human engineer is the accountable owner; the AI is a capable collaborator whose autonomy scales with the quality of the prompt. Well-scoped delegation with clear acceptance criteria is not "blind trust" — it is a higher-leverage operating mode.
+**Core philosophy.** The human engineer is the accountable owner; the AI is a capable collaborator whose autonomy scales with the quality of the prompt. Well-scoped delegation with clear acceptance criteria is not "blind trust" — it is a higher-leverage operating mode.
 
 **Two Collaboration Modes:**
 
 | Mode | When | How | Review |
-|------|------|-----|--------|
+|---|---|---|---|
 | **Pair Mode** (Conductor) | Ambiguous problems, design decisions, learning new domains | Interactive back-and-forth; AI as thought partner | Line-by-line as you go |
 | **Delegation Mode** (Orchestrator) | Well-scoped tasks with clear acceptance criteria | Structured prompt → autonomous execution → human review | Deliverable review against spec |
 
-**Key Capabilities:**
-- **Structured Planning**: Rapid waterfall-style planning before implementation
-- **Chunked Execution**: Small, focused tasks with quick course correction
-- **Context Management**: Systematic context provision for optimal AI output
-- **Model Selection**: Strategic switching between models based on task needs
-- **Human Accountability**: You own the output; review depth scales with delegation scope
-- **Delegation Prompts**: Spec-driven handoff for autonomous execution
-- **Granular Commits**: Frequent save points for easy rollback
-- **Continuous Learning**: Skill amplification through AI collaboration
+## Cowork Quick Start
 
-## Prerequisites
+From a Cowork session, this skill's three most common outputs are:
 
-**Required:**
-- Git repository initialized
-- Testing framework configured
-- Linter/formatter installed
+1. **A plan** for a feature or change, negotiated through the interview prompt (Principle 0) and written as a short plan doc.
+2. **A delegation prompt** using the template in the *Delegation Mode* section below, ready to paste into Claude Code or hand to a Task agent.
+3. **A review artifact** — a critique of a draft plan, spec, or diff brought back from Claude Code.
 
-**Recommended:**
-- CI/CD pipeline configured
-- Type checker enabled (TypeScript, mypy, etc.)
-- Context packaging tool (gitingest, repo2txt)
+For actual file edits, builds, or test runs, hand off to Claude Code via Desktop Commander (`cd <repo> && claude`) or via a Task agent. See `iac/github-playbook` for the handoff conventions.
 
-## Quick Start
+## The 10 Principles
 
-### Begin a New Feature
-```bash
-# Step 1: Plan with AI
-/llm-workflow plan "Implement user authentication with JWT"
+### 0. Interview Before Planning
 
-# Step 2: Execute in chunks
-/llm-workflow implement --chunk-size small
-
-# Step 3: Review and commit
-/llm-workflow review --commit
-```
-
-### Debug an Issue
-```bash
-/llm-workflow debug "Memory leak in event handlers"
-```
-
-### Refactor Code
-```bash
-/llm-workflow refactor src/legacy/utils.js --modernize
-```
-
----
-
-## Complete Guide
-
-### The 10 Principles
-
-This workflow is built on 10 core principles that maximize AI effectiveness:
-
-#### 0. Interview Before Planning
-
-**Before you plan, make sure you're planning the right thing.** Most people show up with a solution in their head ("build me a dashboard") when the real need is something different ("I need three numbers emailed to me every Monday"). This one prompt closes the gap:
+**Before you plan, make sure you're planning the right thing.** Most people arrive with a solution in their head ("build me a dashboard") when the real need is something different ("I need three numbers emailed to me every Monday"). One prompt closes the gap:
 
 > *"I'm about to start this project. Interview me until you have 95% confidence about what I actually want, not what I think I should want."*
 
-This flips the dynamic. Instead of you pitching an idea and hoping the AI reads your mind, the AI asks the questions that surface assumptions you did not know you were making. It separates the _what_ from the _why_ before a single line of planning gets done.
+This flips the dynamic. Instead of pitching an idea and hoping the AI reads your mind, the AI asks the questions that surface assumptions you did not know you were making. It separates the *what* from the *why* before a single line of planning gets done.
 
-**How to use it:**
-- Start every new project or feature with this prompt (or something like it)
-- Answer honestly, including "I don't know yet" — the gaps are where the value is
-- Let the AI play it back: "So what you actually need is ___. Is that right?"
-- Only after confirmation should you move to Principle 1 (planning)
+How to use it: start every new project or feature with this prompt (or something close). Answer honestly, including "I don't know yet" — the gaps are where the value is. Let the AI play it back ("So what you actually need is ___. Is that right?"). Only after confirmation should you move to Principle 1.
 
-This is especially valuable in **Delegation Mode** — if the spec is wrong, everything downstream is wrong. Five minutes of interviewing saves five hours of rework.
+This is especially valuable in Delegation Mode — if the spec is wrong, everything downstream is wrong. Five minutes of interviewing saves five hours of rework.
 
-#### 1. Plan Before Coding
+### 1. Plan Before Coding
 
-**Never start implementation without a plan.** Use AI to rapidly create detailed specifications.
+Never start implementation without a plan. Use AI to rapidly create detailed specifications covering functional requirements, edge cases, technical constraints, preferred patterns, and success criteria. This is "waterfall in 15 minutes" — rapid structured planning that prevents wasted cycles. For the full spec format, see `iac/spec-driven-development`.
 
-```
-You: I need to implement [feature]. Help me create a detailed spec including:
-- Functional requirements
-- Edge cases
-- Technical constraints
-- Preferred patterns
-- Success criteria
-```
+### 2. Scope Work Into Reviewable Units
 
-**Workflow:**
-```bash
-# Create comprehensive plan
-/llm-workflow plan "[feature description]"
+Decompose large asks into bounded, independently verifiable units — not because models can't handle scope, but because review, rollback, and commits operate at the unit level. A unit is the largest slice you can check against acceptance criteria in one pass; each gets its own commit.
 
-# Output includes:
-# - Requirements breakdown
-# - Task decomposition
-# - Risk assessment
-# - Testing strategy
-```
+### 3. Provide Extensive Context
 
-This is "waterfall in 15 minutes" - rapid structured planning that prevents wasted cycles.
+Supply related files and patterns, API documentation, technical constraints, preferred approaches, and known anti-patterns. Context quality still dominates output quality at any model tier — a precise context package outperforms a vague prompt to a stronger model.
 
-#### 2. Break Work Into Small Chunks
+In Cowork, context is provided via Read, MCP tool calls (Drive, Confluence, Notion), and explicit reference to repo files. In Claude Code, use `/context add` or `@file` references.
 
-**Never request monolithic outputs.** Feed the LLM focused, manageable tasks one at a time.
+### 4. Choose the Right Model for the Job
 
-**Bad:**
-```
-Write a complete authentication system with login, logout,
-password reset, 2FA, session management, and user profiles.
-```
+Match model to task — deep reasoning and architecture, fast iteration, multimodal input — and use current pro-tier versions; specific model rankings shift faster than this document. When output is wrong, fix the spec and context before reaching for a different model: that is where the leverage is.
 
-**Good:**
-```
-Task 1: Create the login endpoint with basic validation
-Task 2: Add password hashing utility
-Task 3: Implement session token generation
-...
-```
+### 5. Leverage AI Agents Across the Development Lifecycle
 
-```bash
-# Auto-decompose large tasks
-/llm-workflow decompose "Build authentication system"
-
-# Execute one chunk at a time
-/llm-workflow next-chunk
-```
-
-Each iteration carries forward context from completed work.
-
-#### 3. Provide Extensive Context
-
-**LLMs are only as good as the context you provide.** Supply all relevant information:
-
-- Codebase sections (related files, patterns)
-- API documentation
-- Technical constraints
-- Preferred approaches
-- Examples of good solutions
-- Warnings about problematic approaches
-
-```bash
-# Pack context for a task
-/llm-workflow context-pack \
-  --files "src/auth/**/*.ts" \
-  --docs "docs/api.md" \
-  --patterns "prefer-composition-over-inheritance"
-
-# Include in prompt
-/llm-workflow implement --with-context
-```
-
-**Context Loading Commands:**
-```
-/context add [file|directory|glob]
-/context add-doc [url|file]
-/context add-constraint "[constraint]"
-/context add-pattern "[pattern-name]"
-/context show
-/context clear
-```
-
-#### 4. Choose the Right Model Strategically
-
-Practice "model musical chairs" - different models have different strengths:
-
-| Model | Strengths | Use For |
-|-------|-----------|---------|
-| Claude | Reasoning, nuance, long context | Architecture, complex logic |
-| GPT-4 | Broad knowledge, tool use | Integration, APIs |
-| Gemini | Multimodal, speed | Quick iterations, docs |
-
-```bash
-# Set preferred model for task type
-/llm-workflow config set model.architecture "claude"
-/llm-workflow config set model.quickfix "gemini"
-/llm-workflow config set model.integration "gpt4"
-
-# Auto-select based on task
-/llm-workflow implement --auto-model
-
-# Switch when stuck
-/llm-workflow switch-model
-```
-
-**Tip:** Use the newest pro-tier versions for quality results. Switch models when one gets stuck.
-
-#### 5. Leverage AI Agents Across Development Lifecycle
-
-Modern AI coding agents (Claude Code, Cursor, Copilot Workspace) can read files, run tests, fix bugs, open PRs, and execute multi-step tasks autonomously. The question is not whether to delegate, but how much supervision to apply.
-
-**Pair Mode — Interactive agent use:**
-```bash
-# Short, focused agent tasks with immediate review
-/llm-workflow agent-task "Fix all TypeScript errors in src/"
-/llm-workflow agent-task "Update tests for changed files"
-/llm-workflow agent-review  # review before moving on
-```
-
-**Delegation Mode — Autonomous agent execution:**
-```bash
-# Well-scoped delegation with clear acceptance criteria
-# (See "Delegation Mode" section below for full prompt template)
-/llm-workflow delegate "Implement user auth API" --spec spec.md
-/llm-workflow delegate-status   # check progress
-/llm-workflow delegate-review   # review deliverable against spec
-```
+Modern AI coding agents (Claude Code, Cursor, Copilot Workspace) read files, run tests, fix bugs, open PRs, and execute multi-step tasks autonomously. The question is not whether to delegate, but how much supervision to apply.
 
 **Guardrails scale with scope, not with distrust:**
 
-| Delegation Scope | Guardrails |
-|-----------------|------------|
+| Delegation scope | Guardrails |
+|---|---|
 | Single file fix | Commit diff review |
 | Feature implementation | Spec review + test pass + code review |
 | Multi-service change | Spec review + integration tests + manual QA |
-| Infrastructure/security | Never fully delegate; pair mode only |
+| Infrastructure / security | Never fully delegate; pair mode only |
 
-#### 6. Maintain Human Accountability
+### 6. Maintain Human Accountability
 
-**You own the output.** Review depth should scale with delegation scope, not default to maximum suspicion.
+**You own the output.** Review depth scales with delegation scope, not with suspicion.
 
-**Pair Mode review** — You reviewed as you went. A quick diff and test pass suffices:
-```bash
-/llm-workflow test --affected
-/llm-workflow commit
-```
+- **Pair-mode review**: you reviewed as you went. A quick diff and test pass suffices.
+- **Delegation-mode review**: review the deliverable against the spec. Did the agent meet the acceptance criteria? Did the tests pass? Did it stay in scope? See `iac/code-review-and-quality` for the five-axis framework and sizing thresholds.
 
-**Delegation Mode review** — You delegated a scoped task. Review the deliverable against the spec:
-```bash
-# Review deliverable against acceptance criteria
-/llm-workflow delegate-review --spec spec.md
+The operating model is **"delegate, review, own"** — not "distrust and micromanage." A well-scoped prompt with clear acceptance criteria earns a deliverable-level review, not a line-by-line audit.
 
-# Run full test suite
-/llm-workflow test --full
+### 7. Use Frequent, Granular Git Commits
 
-# Security review for sensitive areas
-/llm-workflow review --security
-```
+Treat commits as **save points in a game**. Commit after each small task completes successfully. Benefits: easy rollback if AI suggestions introduce bugs, clear progression in history, safe experimentation. Commit messages follow your team's convention (Conventional Commits, short imperative, etc.) — for Eric's setup, see `iac/github-playbook`.
 
-**Review Checklist (adapt to scope):**
-- [ ] Deliverable matches spec / acceptance criteria
-- [ ] Tests pass (unit + integration as appropriate)
-- [ ] No security regressions
-- [ ] No unintended side effects outside scope
-- [ ] Code style consistent with project conventions
+### 8. Customize AI Behavior
 
-**The operating model is "delegate, review, own"** — not "distrust and micromanage." A well-scoped prompt with clear acceptance criteria earns a deliverable-level review, not a line-by-line audit.
+Create rules files to guide AI outputs toward team idioms. For Claude Code, `CLAUDE.md` at repo root is loaded automatically; for other agents, the equivalent is `.cursorrules`, `GEMINI.md`, or the system prompt. Capture: code style, preferred patterns, anti-patterns, testing conventions, and anything else that would otherwise be repeated in every prompt.
 
-#### 7. Use Frequent, Granular Git Commits
+### 9. Embrace Strong Testing and Automation
 
-Treat commits as **save points in a game**. Commit after each small task completes successfully.
+Robust CI/CD **enhances AI productivity**. Automated feedback loops help refine outputs: linter errors, type errors, and failing tests are exactly the kind of signal agents can act on autonomously. Wire up the pipeline and feed failures back to the agent — most will iterate to green without further guidance.
 
-```bash
-# After each successful chunk
-/llm-workflow commit --auto-message
+### 10. Continuous Learning
 
-# With verification
-/llm-workflow commit --verify-tests
+Using AI doesn't dull skills — it amplifies existing expertise. LLMs reward best practices. Review every piece of AI-generated code to understand why it made specific choices. Debug AI mistakes yourself first before asking for a fix. Keep notes on effective prompts. The insights compound.
 
-# Quick save point
-/llm-workflow checkpoint "Implemented login validation"
-```
-
-**Benefits:**
-- Easy rollback if AI suggestions introduce bugs
-- Clear documentation of development progression
-- Safe experimentation with AI suggestions
-
-#### 8. Customize AI Behavior
-
-Create rules files to guide AI outputs toward team idioms and patterns.
-
-**CLAUDE.md / GEMINI.md / .cursorrules:**
-```markdown
-# Project Conventions
-
-## Code Style
-- Use functional components with hooks (React)
-- Prefer composition over inheritance
-- Maximum function length: 50 lines
-- Always include error boundaries
-
-## Patterns
-- Repository pattern for data access
-- Service layer for business logic
-- DTOs for API responses
-
-## Avoid
-- Any usage of `any` type
-- Nested ternaries
-- Magic numbers without constants
-
-## Testing
-- Unit tests for all business logic
-- Integration tests for API endpoints
-- Minimum 80% coverage
-```
-
-```bash
-# Initialize rules file
-/llm-workflow init-rules
-
-# Add convention
-/llm-workflow add-rule "Always use async/await over .then()"
-
-# Validate against rules
-/llm-workflow validate-rules
-```
-
-#### 9. Embrace Strong Testing and Automation
-
-Robust CI/CD pipelines **enhance AI productivity**. Automated feedback loops help refine outputs.
-
-```bash
-# Setup automation integration
-/llm-workflow setup-ci
-
-# Run full quality pipeline
-/llm-workflow quality-check
-
-# This runs:
-# - Linters
-# - Type checkers
-# - Unit tests
-# - Integration tests
-# - Security scans
-```
-
-**Pipeline Feedback:**
-```bash
-# Feed CI results back to AI for fixes
-/llm-workflow fix-ci-errors
-
-# Auto-iterate until passing
-/llm-workflow iterate-until-green --max-attempts 3
-```
-
-#### 10. Continuous Learning
-
-Using AI doesn't dull skills - it **amplifies existing expertise**. LLMs reward best practices.
-
-```bash
-# Review AI code to learn
-/llm-workflow explain-code
-
-# Debug AI mistakes
-/llm-workflow analyze-error
-
-# Track learning moments
-/llm-workflow log-learning "[insight]"
-```
-
-**Learning Practices:**
-- Review every piece of AI-generated code
-- Understand why AI made specific choices
-- Debug AI mistakes yourself first
-- Keep notes on effective prompts
-
----
-
-### Delegation Mode: Spec-Driven Autonomous Execution
+## Delegation Mode: Spec-Driven Autonomous Execution
 
 When a task is well-scoped with clear acceptance criteria, delegation mode lets you hand off implementation to an AI agent and review the deliverable rather than supervising each step.
 
-#### Pre-Delegation Checklist
+### Pre-Delegation Checklist
 
 Before delegating, verify:
-- [ ] Task has a clear, bounded scope (one feature, one fix, one refactor)
-- [ ] Acceptance criteria are explicit and testable
-- [ ] The codebase has existing tests or a test framework in place
-- [ ] No security-sensitive changes (auth, payments, PII handling) — those stay in pair mode
-- [ ] You can verify the deliverable against the spec without reading every line
+- Task has a clear, bounded scope (one feature, one fix, one refactor)
+- Acceptance criteria are explicit and testable
+- The codebase has existing tests or a test framework in place
+- No security-sensitive changes (auth, payments, PII handling) — those stay in pair mode
+- You can verify the deliverable against the spec without reading every line
 
-#### Delegation Prompt Template
+### Delegation Prompt Template
 
 ```markdown
 ## Task
@@ -416,503 +152,92 @@ Before delegating, verify:
 - [Explicitly list what NOT to do]
 ```
 
-#### Three-Tier Execution Model
+### Three-Tier Execution Model
 
-For complex projects, delegation can span multiple tiers:
+For complex projects, delegation spans multiple tiers. Each tier is optimized for a different scope of work, and the spec is the handoff document between them.
 
-| Tier | Tool | Role | Example |
-|------|------|------|---------|
-| **Design** | Cowork / Chat | Architecture, spec writing, review | "Design the auth system" |
-| **Build** | Claude Code | Autonomous implementation | "Implement the auth API per spec.md" |
-| **Scale** | Ruflo / Swarms | Parallel multi-agent execution | "Run 4 agents: API, tests, docs, migration" |
+| Tier | Surface | Role | Example |
+|---|---|---|---|
+| **Design** | Cowork | Architecture, spec writing, review, decision capture | "Design the auth system; write spec.md" |
+| **Build** | Claude Code CLI | Autonomous multi-file implementation | "Implement the auth API per spec.md; make tests pass" |
+| **Scale** | Ruflo | Parallel multi-agent execution | "Run 4 agents: API, tests, docs, migration" |
 
-The spec is the handoff document between tiers. Write it in tier 1, execute it in tier 2, scale it in tier 3.
+Cowork is where the thinking happens. Claude Code is where the code gets written. Ruflo is where work parallelizes across agents. Always write the spec in Cowork before handing off to the next tier.
 
-#### Recovery from Delegation Failures
+### Recovery from Delegation Failures
 
-When a delegated task goes off-track:
-1. **Stop** — don't let it compound. `git stash` or `git reset` to last checkpoint.
-2. **Diagnose** — was the spec ambiguous? Was context missing? Was the task too broad?
-3. **Adjust** — tighten the spec, add missing context, break into smaller delegations.
-4. **Re-delegate or switch to pair mode** depending on diagnosis.
+Delegation fails. Plan for it. When a delegated task returns a broken deliverable:
 
----
+1. **Stop.** Do not re-delegate the same prompt. The failure mode will repeat.
+2. **Diagnose.** Read the diff, the test output, and the agent's stated reasoning. Identify whether the failure was spec ambiguity, missing context, scope creep, or a genuine bug.
+3. **Adjust.** Tighten the spec, add missing context, or narrow the scope. If the agent misread a requirement, the spec was unclear — fix the spec, not the agent.
+4. **Re-delegate or take it back.** If the spec is now crisp, re-delegate. If the work is revealing deep architectural questions, pull it back into pair mode and work through it interactively.
 
-### Workflow Commands
+## Cowork-Native Patterns
 
-#### Planning Phase
+These are the three patterns that actually fit the Cowork surface. Each produces an artifact Eric can carry forward — to Claude Code, to a PR description, to a tracker — not an in-session code edit.
 
-```bash
-# Start new feature planning
-/llm-workflow plan "[feature]"
+### Pattern 1: Plan-Before-Delegate
 
-# Create detailed spec
-/llm-workflow spec "[feature]" --include-edge-cases
+**Input:** An underspecified ask ("add SSO to LogiQ").
+**Cowork action:** Run the Principle 0 interview. Produce a written plan with clarifying questions resolved, acceptance criteria, and a file/path map. Write it to the project's `SESSION.md` or a new `spec.md`.
+**Handoff:** Eric opens Claude Code in the repo and says "implement spec.md." The plan is the contract.
 
-# Decompose into tasks
-/llm-workflow decompose --output-format todolist
+### Pattern 2: Review-and-Redline
 
-# Generate project plan
-/llm-workflow project-plan --milestones
-```
+**Input:** A diff, PR link, or AI-generated deliverable.
+**Cowork action:** Apply the five-axis review from `iac:code-review-and-quality` (correctness, clarity, security, performance, testability). Produce a numbered redline with evidence: file:line, what's wrong, what to do instead.
+**Handoff:** Eric pastes the redline into the PR or hands it to Claude Code as a fix prompt.
 
-#### Implementation Phase
+### Pattern 3: Debug-and-Document
 
-```bash
-# Implement current chunk
-/llm-workflow implement
+**Input:** A failing test, broken build, or runtime error.
+**Cowork action:** Run the `iac:debugging-and-error-recovery` triage (Reproduce → Localize → Reduce → Root-cause → Guard → Verify). Produce a written root-cause note and a minimal reproduction.
+**Handoff:** The root-cause note goes into SESSION.md "Known Issues" and feeds the next Claude Code session.
 
-# Implement specific task
-/llm-workflow implement "[task description]"
+In all three patterns, Cowork writes the spec or the redline; Claude Code executes it. That division of labor is the point.
 
-# With full context
-/llm-workflow implement --with-context --verify
+## Best Practices
 
-# Quick iteration
-/llm-workflow iterate "[feedback]"
-```
+### Session Hygiene
 
-#### Review Phase
+- **Keep context tight.** In Cowork, every file read consumes the window. Read only what the task requires. When the task touches >2 source files, hand off to Claude Code.
+- **Write it down before you forget it.** When a non-obvious decision lands ("we chose Supabase over Neon because pgvector is built-in"), capture it in SESSION.md or a decision doc before the next compaction.
+- **One mode at a time.** Don't toggle between pair and delegation mid-task. Finish the current mode's deliverable, then decide whether the next step is pair or delegate.
 
-```bash
-# Full review
-/llm-workflow review
+### Review Discipline
 
-# Security-focused review
-/llm-workflow review --security
+- **Diff before merge.** Always read the diff, even when delegation produced green tests. Tests prove behavior; diffs reveal intent and maintainability.
+- **Verify the happy path with real input.** Compilation is not correctness. Run one real case through the new code and show the output.
+- **Root-cause before patch.** If a test fails, understand why before changing code. Patches on top of misdiagnoses compound into debt.
 
-# Performance review
-/llm-workflow review --performance
+### Anti-Patterns to Avoid
 
-# Review with comparison
-/llm-workflow review --compare-original
-```
+- **Aspirational CLI.** Never document commands that don't exist. If a workflow is "you'd invoke /foo," write out the actual prompt or handoff instead.
+- **Silent re-delegation.** Re-running the same prompt after a failure without changing the spec wastes tokens and produces identical failures.
+- **Context sprawl.** Loading every reference file "just in case" is the fastest way to hit a compaction mid-task. Load on demand.
+- **Edit-first-reason-later.** Modifying code before reading the surrounding call path is how regressions ship.
 
-#### Testing Phase
+## Summary
 
-```bash
-# Run affected tests
-/llm-workflow test
+Two modes, one philosophy: AI is a collaborator, not a command shell. Pair mode is for thinking together. Delegation mode is for handing off bounded work with a written spec. Cowork is where specs and reviews live. Claude Code is where the code gets written. Ruflo is where work parallelizes.
 
-# Generate missing tests
-/llm-workflow test --generate
+The ten principles — Interview-Before-Plan, Plan-Before-Code, Reviewable Units, Extensive Context, Right Model for the Job, Agent Lifecycle Guardrails, Human Accountability, Granular Commits, Customize AI, Testing/Automation, Continuous Learning — apply to both modes. Which principle dominates depends on what you're doing, but none of them is optional.
 
-# Coverage check
-/llm-workflow test --coverage
+## Sources & References
 
-# Full test suite
-/llm-workflow test --full
-```
+- Addy Osmani — *Beyond the Hype: A Realistic Look at Large Language Models in Software Engineering* (2024–2026 series)
+- Harper Reed — codegen pipeline essays and the "spec as handoff" pattern
+- Anthropic — Claude Code and Agent SDK documentation, agentic coding research
+- Greptile — AI code review practitioner notes
+- Geoffrey Huntley — LLM coding discipline essays
+- Eric Porres — "WhatsApp as an AI copilot surface" (Beyond Reason, 2026)
 
-#### Commit Phase
+## Related Skills
 
-```bash
-# Commit with auto-generated message
-/llm-workflow commit
-
-# Commit specific files
-/llm-workflow commit [files...] --message "[msg]"
-
-# Create checkpoint
-/llm-workflow checkpoint "[description]"
-
-# Rollback last change
-/llm-workflow rollback
-```
-
----
-
-### In-Session Commands
-
-#### Context Commands
-```
-/context add [path]          Add file/directory to context
-/context add-doc [url]       Add documentation
-/context add-pattern [name]  Add pattern constraint
-/context show                Show current context
-/context clear               Clear context
-/context pack                Bundle for LLM
-```
-
-#### Model Commands
-```
-/model switch [name]         Switch to specific model
-/model auto                  Auto-select based on task
-/model compare               Compare outputs from multiple models
-```
-
-#### Chunk Commands
-```
-/chunk list                  Show all chunks
-/chunk current               Show current chunk
-/chunk next                  Move to next chunk
-/chunk skip                  Skip current chunk
-/chunk done                  Mark chunk complete
-```
-
-#### Review Commands
-```
-/review code                 Review current changes
-/review security             Security-focused review
-/review perf                 Performance review
-/review all                  Comprehensive review
-```
-
-#### Git Commands
-```
-/save                        Quick commit checkpoint
-/rollback                    Undo last change
-/history                     Show session history
-/diff                        Show current changes
-```
-
----
-
-### Configuration
-
-#### Basic Configuration
-
-Create `.llm-workflow.json`:
-
-```json
-{
-  "workflow": {
-    "chunkSize": "small",
-    "autoCommit": true,
-    "autoTest": true,
-    "humanReview": "required"
-  }
-}
-```
-
-#### Complete Configuration
-
-```json
-{
-  "workflow": {
-    "planning": {
-      "required": true,
-      "includeEdgeCases": true,
-      "includeRisks": true,
-      "template": "detailed"
-    },
-
-    "chunks": {
-      "size": "small",
-      "maxLines": 50,
-      "autoDecompose": true,
-      "carryContext": true
-    },
-
-    "context": {
-      "autoLoad": true,
-      "includePatterns": true,
-      "includeDocs": true,
-      "maxTokens": 100000
-    },
-
-    "models": {
-      "default": "claude",
-      "architecture": "claude",
-      "quickfix": "gemini",
-      "integration": "gpt4",
-      "autoSwitch": true
-    },
-
-    "review": {
-      "required": true,
-      "security": true,
-      "performance": true,
-      "beforeCommit": true
-    },
-
-    "commits": {
-      "granular": true,
-      "autoMessage": true,
-      "verifyTests": true,
-      "signOff": false
-    },
-
-    "testing": {
-      "autoRun": true,
-      "framework": "jest",
-      "coverage": {
-        "minimum": 80,
-        "enforce": true
-      }
-    },
-
-    "rules": {
-      "file": "CLAUDE.md",
-      "enforce": true,
-      "validate": true
-    },
-
-    "learning": {
-      "logInsights": true,
-      "trackPatterns": true,
-      "exportNotes": true
-    }
-  }
-}
-```
-
----
-
-### Real-World Examples
-
-#### Example 1: New Feature Implementation
-
-**Task:** Add user profile editing with avatar upload
-
-```bash
-# Step 1: Plan
-/llm-workflow plan "User profile editing with avatar upload"
-
-# Output:
-# - Requirements: Edit name, email, bio, avatar
-# - Constraints: Max 5MB avatar, image validation
-# - Tasks: 8 chunks identified
-# - Risks: File upload security, image processing
-
-# Step 2: Context
-/context add src/components/Profile/
-/context add src/services/user.ts
-/context add-doc "docs/api/users.md"
-/context add-pattern "use-react-hook-form"
-
-# Step 3: Implement chunk by chunk
-/llm-workflow implement "Create ProfileEditForm component structure"
-/llm-workflow test
-/llm-workflow commit
-
-/llm-workflow implement "Add form validation with react-hook-form"
-/llm-workflow test
-/llm-workflow commit
-
-/llm-workflow implement "Create avatar upload component"
-/llm-workflow review --security
-/llm-workflow test
-/llm-workflow commit
-
-# Continue until complete...
-
-# Step 4: Final review
-/llm-workflow review --all
-/llm-workflow test --coverage
-```
-
-#### Example 2: Bug Fix
-
-**Task:** Fix memory leak in event handlers
-
-```bash
-# Step 1: Gather context
-/context add src/hooks/useEventListener.ts
-/context add src/components/Dashboard.tsx
-
-# Step 2: Analyze with AI
-/llm-workflow debug "Memory leak - listeners not cleaned up"
-
-# Step 3: Get fix suggestion
-/llm-workflow implement "Add cleanup in useEffect"
-
-# Step 4: Verify
-/llm-workflow review
-/llm-workflow test
-/llm-workflow commit "fix: add cleanup for event listeners"
-```
-
-#### Example 3: Code Refactoring
-
-**Task:** Modernize legacy utility file
-
-```bash
-# Step 1: Plan refactoring
-/llm-workflow plan "Modernize utils.js - callbacks to async/await"
-
-# Step 2: Safety first
-/llm-workflow test --generate  # Generate tests for current behavior
-/llm-workflow commit "test: add tests before refactor"
-
-# Step 3: Refactor in chunks
-/llm-workflow implement "Convert getUserData callback to async"
-/llm-workflow test
-/llm-workflow commit
-
-/llm-workflow implement "Convert fetchOrders callback to async"
-/llm-workflow test
-/llm-workflow commit
-
-# Step 4: Verify no regression
-/llm-workflow test --full
-/llm-workflow review --compare-original
-```
-
-#### Example 4: API Development
-
-**Task:** Build REST API for blog posts
-
-```bash
-# Step 1: Design with AI
-/llm-workflow plan "REST API for blog posts CRUD"
-
-# Step 2: Generate OpenAPI spec
-/llm-workflow implement "OpenAPI specification for blog posts"
-/llm-workflow commit
-
-# Step 3: Implement endpoints
-/llm-workflow implement "POST /api/posts with validation"
-/llm-workflow test --generate
-/llm-workflow commit
-
-/llm-workflow implement "GET /api/posts with pagination"
-/llm-workflow test
-/llm-workflow commit
-
-# Continue for remaining endpoints...
-
-# Step 4: Security review
-/llm-workflow review --security
-/llm-workflow implement "Add rate limiting and input sanitization"
-/llm-workflow test
-/llm-workflow commit
-```
-
----
-
-### Best Practices
-
-#### Session Practices
-1. **Always plan first** - 15 minutes of planning saves hours of rework
-2. **Small chunks** - If it feels big, break it down more
-3. **Context is king** - More relevant context = better output
-4. **Switch models** - Don't get stuck; try a different model
-5. **Review everything** - You're the accountable engineer
-6. **Commit often** - Every passing test is a save point
-
-#### Anti-Patterns to Avoid
-1. **Monolithic requests** - "Build me the entire feature"
-2. **Blind trust** - Accepting AI code without review
-3. **Context starvation** - Not providing enough information
-4. **Model loyalty** - Sticking with one model when stuck
-5. **Big commits** - Waiting until everything is done
-6. **Skipping tests** - "It looks right" is not verification
-
-#### When to Switch Models
-
-| Situation | Action |
-|-----------|--------|
-| AI gives repetitive wrong answers | Switch model |
-| Complex reasoning needed | Try Claude |
-| Need speed for iterations | Try Gemini |
-| API/integration task | Try GPT-4 |
-| Getting stuck | Always try switching |
-
----
-
-### Troubleshooting
-
-#### AI Producing Poor Output
-1. Check context completeness
-2. Verify clear task description
-3. Try switching models
-4. Break task into smaller chunks
-5. Add more examples/patterns
-
-#### Tests Failing After AI Changes
-1. Use `/rollback` to restore
-2. Review the failing change
-3. Ask AI to explain its approach
-4. Implement manually with AI guidance
-5. Commit more granularly next time
-
-#### Context Too Large
-1. Focus on most relevant files
-2. Summarize documentation
-3. Use pattern references instead of examples
-4. Split into multiple sessions
-
-#### Model Not Following Conventions
-1. Check rules file is loaded
-2. Explicitly state conventions in prompt
-3. Provide examples of correct style
-4. Add constraints to context
-
----
-
-### Integration with Tools
-
-#### Context Packaging
-- **gitingest** - Bundle repo for LLM ingestion
-- **repo2txt** - Convert repo to text
-- **Context7** - Advanced context management
-
-#### Code Review
-- **Chrome DevTools MCP** - Debugging and quality loops
-- Built-in `/review` commands
-
-#### Testing
-- Integrates with Jest, pytest, Mocha, etc.
-- Auto-generates tests with `/test --generate`
-- Coverage tracking with `/test --coverage`
-
----
-
-### Environment Variables
-
-```bash
-export LLM_WORKFLOW_MODEL="claude"
-export LLM_WORKFLOW_CHUNK_SIZE="small"
-export LLM_WORKFLOW_AUTO_COMMIT="true"
-export LLM_WORKFLOW_HUMAN_REVIEW="required"
-export LLM_WORKFLOW_TEST_FRAMEWORK="jest"
-```
-
----
-
-### Summary
-
-The LLM Coding Workflow treats AI as a capable collaborator whose autonomy scales with prompt quality. Success comes from:
-
-1. **Plan** — Rapid structured planning before coding
-2. **Chunk** — Small, focused tasks (pair mode) or well-scoped delegations (delegation mode)
-3. **Context** — Extensive relevant information; context injection beats model upgrades
-4. **Select** — Right model for the task
-5. **Delegate or Pair** — Match the collaboration mode to the task
-6. **Own** — Review depth scales with scope; you own the output regardless
-7. **Commit** — Granular save points for easy rollback
-8. **Learn** — Continuous skill amplification through AI collaboration
-
-**The operating model is "delegate, review, own."** AI coding agents are force multipliers — and increasingly, autonomous executors of well-scoped work. The human engineer sets direction, writes specs, reviews deliverables, and takes accountability.
-
----
-
-### Sources & References
-
-This skill synthesizes insights from the following sources:
-
-**Primary Frameworks:**
-- Addy Osmani, "The Human Side of AI Coding: Conductor vs. Orchestrator" (addyosmani.com, 2025) — Two collaboration modes framework
-- Addy Osmani, "LLM Coding Workflow" (addyosmani.com, 2025) — 10 principles for AI-augmented development
-- Harper Reed, "My LLM Codegen Workflow" (harper.blog, 2025) — Spec-driven pipeline: spec.md → plan.md → prompt_plan.md
-
-**Research & Industry Reports:**
-- Anthropic, "Agentic Coding Trends in 2026" (code.claude.com/blog, 2026) — Agents complete ~20 actions autonomously; "delegate, review, own" operating model
-- Anthropic, "Claude Code Best Practices" (docs.anthropic.com, 2025-2026) — CLAUDE.md conventions, context injection, permission management
-- Greptile, "Measuring the Impact of AI on Developer Productivity" (greptile.com, 2025) — Quantitative analysis of AI coding impact
-
-**Practitioner Accounts:**
-- Eric Porres, "How I Built a WhatsApp MCP Server Without Writing a Single Line of Code" (promptedbyeric.substack.com, 2026) — Real-world Cowork → Claude Code delegation pattern
-- Geoffrey Huntley, "Ultra-Large Context and Agentic Coding" (ghuntley.com, 2025) — Context window management strategies
-
-**Related Skills:**
-- `builder-playbook` — Project archetypes, scaffold recipes, and infrastructure patterns extracted from 45+ projects
-- `github-playbook` — Git workflow, multi-machine setup, daily development patterns
-
-### Related Commands
-
-- `/llm-workflow --help` - Show all commands
-- `/llm-workflow config` - Configuration management
-- `/llm-workflow init` - Initialize in project
-- `/llm-workflow status` - Show current session status
+- `iac:spec-driven-development` — write the spec before writing the code
+- `iac:code-review-and-quality` — five-axis review methodology
+- `iac:debugging-and-error-recovery` — structured triage when things break
+- `iac:builder-playbook` — project archetypes and scaffold recipes
+- `iac:github-playbook` — repo workflow and multi-machine setup
+- `iac:agent-landscape` — frameworks, personas, marketplace strategy
