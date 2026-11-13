@@ -148,9 +148,16 @@ Before delegating, verify:
 - Do not modify [protected areas]
 - All tests must pass before marking complete
 
+## Ownership
+[One of the two lines below. Never leave this section out.]
+- This codebase is yours: what it's for and how it's built are your call, and you'll keep building on it.
+- This is someone else's code. Make the smallest change that meets the acceptance criteria and leave the structure as it is.
+
 ## Out of Scope
 - [Explicitly list what NOT to do]
 ```
+
+**Why the Ownership section is required (added 2026-11-10).** A prompt that says nothing about ownership gets the same result as one that says the code is someone else's: the agent adds to the existing structure, even when that repeats code. Anthropic's Fable 5.2 prompting guide (read 2026-11-09) reports that with the "yours" sentence the model merged repeated code in about half of tries, against under a tenth without it. The cost: about 1.5x output tokens, and unrequested changes to existing behavior in one try in six to ten, often missing from the agent's summary. Pick "yours" for Eric's own projects where consolidation is wanted. Pick "someone else's" for consumed plugins, public repos that take outside PRs, and any fix where minimal change is the goal. A scope rule such as "no drive-by refactors" does not cancel the "yours" line, so do not send both. Tested on Fable 5.2 only; untested on Opus 5.5 and Sonnet 5.5. Details: `iac:fable-5-scaffolding`.
 
 ### Three-Tier Execution Model
 
