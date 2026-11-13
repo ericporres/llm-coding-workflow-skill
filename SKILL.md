@@ -186,7 +186,7 @@ These are the three patterns that actually fit the Cowork surface. Each produces
 
 ### Pattern 1: Plan-Before-Delegate
 
-**Input:** An underspecified ask ("add SSO to LogiQ").
+**Input:** An underspecified ask ("add SSO to the internal dashboard").
 **Cowork action:** Run the Principle 0 interview. Produce a written plan with clarifying questions resolved, acceptance criteria, and a file/path map. Write it to the project's `SESSION.md` or a new `spec.md`.
 **Handoff:** Eric opens Claude Code in the repo and says "implement spec.md." The plan is the contract.
 
