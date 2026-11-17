@@ -1,9 +1,9 @@
 ---
 name: llm-coding-workflow
 description: AI-augmented software engineering workflow synthesized from Addy Osmani's methodology, Anthropic's agentic coding research, and 30+ real-world projects. Supports two collaboration modes — interactive pair programming and autonomous delegation — with structured planning, context management, strategic model selection, human accountability, and continuous learning.
-version: 3.1
+version: 3.2
 created_by: "Eric Porres — eric@porres.com"
-last_updated: 2026-06-10
+last_updated: 2026-11-17
 ---
 
 # LLM Coding Workflow
@@ -12,14 +12,14 @@ AI-augmented software engineering workflow that maximizes LLM effectiveness thro
 
 ## Surface Contract
 
-This skill is invoked primarily in **Cowork sessions**. In Cowork, its output is always an **artifact** — a plan, a spec, a delegation prompt, or a review. It is not an execution surface for code.
+This skill is invoked primarily in **Cowork sessions**. Cowork is the default surface for the whole loop: it writes the plan or spec and usually executes it. (Revised 2026-11-17. Earlier versions treated Cowork as artifact-only and sent every build to Claude Code or Ruflo.)
 
 | Surface | This skill produces | Execution happens in |
 |---|---|---|
-| **Cowork** (primary) | Plan, spec, delegation prompt, review, handoff doc | Claude Code CLI (via terminal) or Ruflo (swarm/scale) |
-| **Claude Code CLI** | Can load for reference; informs pair-mode coaching | In place (the CLI itself writes/edits files) |
+| **Cowork** (primary) | Plan, spec, delegation prompt, review, and usually the implementation | In session. The main loop first; subagents or a `Workflow` run when slices are parallel or the reading would crowd the session's context |
+| **Claude Code CLI** (fallback) | Can load for reference; informs pair-mode coaching | In place, for a multi-file refactor with a build-and-test loop, an interactive process you watch and steer, or when Cowork can't reach the machine. A parallel build across disjoint folders runs there as an agent team (`iac:agent-teams`) |
 
-When an agent running in Cowork reads an example that says "implement the feature" or "run the tests," the correct action is to **produce a delegation prompt and hand off to Claude Code**, not to attempt implementation in-session. Cowork's Desktop Commander MCP can invoke Claude Code remotely, but the skill's own advice is about the handoff artifact, not in-session edits.
+When execution leaves the session that wrote the spec (a subagent, a `Workflow` run, or Claude Code), the spec is the handoff document. Pass it whole; a summary drops the boundaries.
 
 ## What This Skill Does
 
@@ -39,10 +39,10 @@ This skill synthesizes Addy Osmani's LLM coding workflow, Anthropic's agentic co
 From a Cowork session, this skill's three most common outputs are:
 
 1. **A plan** for a feature or change, negotiated through the interview prompt (Principle 0) and written as a short plan doc.
-2. **A delegation prompt** using the template in the *Delegation Mode* section below, ready to paste into Claude Code or hand to a Task agent.
-3. **A review artifact** — a critique of a draft plan, spec, or diff brought back from Claude Code.
+2. **A delegation prompt** using the template in the *Delegation Mode* section below, ready to hand to a subagent or paste into Claude Code.
+3. **A review artifact** — a critique of a draft plan, spec, or diff, wherever it was written.
 
-For actual file edits, builds, or test runs, hand off to Claude Code via Desktop Commander (`cd <repo> && claude`) or via a Task agent. See `iac/github-playbook` for the handoff conventions.
+File edits, builds, and test runs happen in the same session by default. Hand off to Claude Code (`cd <repo> && claude`) for the fallback cases in the Surface Contract; see `iac/github-playbook` for the conventions.
 
 ## The 10 Principles
 
@@ -159,17 +159,17 @@ Before delegating, verify:
 
 **Why the Ownership section is required (added 2026-11-10).** A prompt that says nothing about ownership gets the same result as one that says the code is someone else's: the agent adds to the existing structure, even when that repeats code. Anthropic's Fable 5.2 prompting guide (read 2026-11-09) reports that with the "yours" sentence the model merged repeated code in about half of tries, against under a tenth without it. The cost: about 1.5x output tokens, and unrequested changes to existing behavior in one try in six to ten, often missing from the agent's summary. Pick "yours" for Eric's own projects where consolidation is wanted. Pick "someone else's" for consumed plugins, public repos that take outside PRs, and any fix where minimal change is the goal. A scope rule such as "no drive-by refactors" does not cancel the "yours" line, so do not send both. Tested on Fable 5.2 only; untested on Opus 5.5 and Sonnet 5.5. Details: `iac:fable-5-scaffolding`.
 
-### Three-Tier Execution Model
+### Execution Model: Two Tiers and a Fallback
 
-For complex projects, delegation spans multiple tiers. Each tier is optimized for a different scope of work, and the spec is the handoff document between them.
+The spec is the handoff document whenever execution leaves the session that wrote it.
 
 | Tier | Surface | Role | Example |
 |---|---|---|---|
 | **Design** | Cowork | Architecture, spec writing, review, decision capture | "Design the auth system; write spec.md" |
-| **Build** | Claude Code CLI | Autonomous multi-file implementation | "Implement the auth API per spec.md; make tests pass" |
-| **Scale** | Ruflo | Parallel multi-agent execution | "Run 4 agents: API, tests, docs, migration" |
+| **Build** | Cowork | Execute against the spec in the main loop; add subagents or a `Workflow` run for parallel slices and fresh-context verification | "Implement the auth API per spec.md; make tests pass" |
+| **Fallback** | Claude Code CLI | Multi-file refactor with a build-and-test loop; an interactive process; Cowork can't reach the machine. Agent team (`iac:agent-teams`) when the build splits into disjoint folders with a contract between them | "Migrate 40 files to the new client; keep the suite green" |
 
-Cowork is where the thinking happens. Claude Code is where the code gets written. Ruflo is where work parallelizes across agents. Always write the spec in Cowork before handing off to the next tier.
+Start in one loop. An agent that has seen every earlier result connects them better than one reading summaries, so add a subagent only when context bloat measurably hurts the loop, when slices can run in parallel in windows that get discarded, or for a verifier that must not see the author's reasoning. Ruflo was the scale tier until 2026-09-16 and is retired; do not route work to it.
 
 ### Recovery from Delegation Failures
 
@@ -182,33 +182,33 @@ Delegation fails. Plan for it. When a delegated task returns a broken deliverabl
 
 ## Cowork-Native Patterns
 
-These are the three patterns that actually fit the Cowork surface. Each produces an artifact Eric can carry forward — to Claude Code, to a PR description, to a tracker — not an in-session code edit.
+These three patterns fit the Cowork surface. Each produces an artifact that outlives the session (a spec, a redline, a root-cause note), whether the session then executes it or hands it off.
 
 ### Pattern 1: Plan-Before-Delegate
 
 **Input:** An underspecified ask ("add SSO to the internal dashboard").
 **Cowork action:** Run the Principle 0 interview. Produce a written plan with clarifying questions resolved, acceptance criteria, and a file/path map. Write it to the project's `SESSION.md` or a new `spec.md`.
-**Handoff:** Eric opens Claude Code in the repo and says "implement spec.md." The plan is the contract.
+**Next step:** Execute the spec in the same session, or hand it whole to a subagent, a `Workflow` run, or Claude Code (fallback cases above). The plan is the contract.
 
 ### Pattern 2: Review-and-Redline
 
 **Input:** A diff, PR link, or AI-generated deliverable.
 **Cowork action:** Apply the five-axis review from `iac:code-review-and-quality` (correctness, clarity, security, performance, testability). Produce a numbered redline with evidence: file:line, what's wrong, what to do instead.
-**Handoff:** Eric pastes the redline into the PR or hands it to Claude Code as a fix prompt.
+**Next step:** The redline goes into the PR, or becomes the fix prompt in this session or in Claude Code.
 
 ### Pattern 3: Debug-and-Document
 
 **Input:** A failing test, broken build, or runtime error.
 **Cowork action:** Run the `iac:debugging-and-error-recovery` triage (Reproduce → Localize → Reduce → Root-cause → Guard → Verify). Produce a written root-cause note and a minimal reproduction.
-**Handoff:** The root-cause note goes into SESSION.md "Known Issues" and feeds the next Claude Code session.
+**Next step:** The root-cause note goes into SESSION.md "Known Issues" and feeds the fix, in this session or the next.
 
-In all three patterns, Cowork writes the spec or the redline; Claude Code executes it. That division of labor is the point.
+In all three patterns the written artifact comes first. Who executes it is a routing choice, and the main loop is the default.
 
 ## Best Practices
 
 ### Session Hygiene
 
-- **Keep context tight.** In Cowork, every file read consumes the window. Read only what the task requires. When the task touches >2 source files, hand off to Claude Code.
+- **Keep context tight.** In Cowork, every file read consumes the window. Read only what the task requires. When the reading would crowd the window, hand it to a subagent that writes its findings to a file; a multi-file refactor with a build-and-test loop goes to Claude Code.
 - **Write it down before you forget it.** When a non-obvious decision lands ("we chose Supabase over Neon because pgvector is built-in"), capture it in SESSION.md or a decision doc before the next compaction.
 - **One mode at a time.** Don't toggle between pair and delegation mid-task. Finish the current mode's deliverable, then decide whether the next step is pair or delegate.
 
@@ -227,7 +227,7 @@ In all three patterns, Cowork writes the spec or the redline; Claude Code execut
 
 ## Summary
 
-Two modes, one philosophy: AI is a collaborator, not a command shell. Pair mode is for thinking together. Delegation mode is for handing off bounded work with a written spec. Cowork is where specs and reviews live. Claude Code is where the code gets written. Ruflo is where work parallelizes.
+Two modes, one philosophy: AI is a collaborator, not a command shell. Pair mode is for thinking together. Delegation mode is for handing off bounded work with a written spec. Cowork is where specs and reviews live, and usually where the code gets written. Claude Code is the fallback for build-and-test refactors. Parallel work runs as subagents or an agent team, and only where one loop measurably falls short.
 
 The ten principles — Interview-Before-Plan, Plan-Before-Code, Reviewable Units, Extensive Context, Right Model for the Job, Agent Lifecycle Guardrails, Human Accountability, Granular Commits, Customize AI, Testing/Automation, Continuous Learning — apply to both modes. Which principle dominates depends on what you're doing, but none of them is optional.
 
@@ -247,4 +247,4 @@ The ten principles — Interview-Before-Plan, Plan-Before-Code, Reviewable Units
 - `iac:debugging-and-error-recovery` — structured triage when things break
 - `iac:builder-playbook` — project archetypes and scaffold recipes
 - `iac:github-playbook` — repo workflow and multi-machine setup
-- `iac:agent-landscape` — frameworks, personas, marketplace strategy
+- `iac:agent-teams` — lead, builders, and adversary in Claude Code, with a single-loop comparison arm
